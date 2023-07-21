@@ -49,6 +49,19 @@ Resources:
       AvailabilityZone: "eu-west-1"
       MapPublicIpOnLaunch: true  
 
+  PublicRoutingTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  PublicRouting:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRoutingTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
   LaunchConfiguration:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
