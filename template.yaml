@@ -100,6 +100,7 @@ Resources:
       Tags:
         - Key: Name
           Value: MyLoadBalancer
+          
   MyTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
@@ -147,19 +148,15 @@ Resources:
   EC2InstancePublicIp:
     Description: EC2 Instance Public IP
     Value: !GetAtt EC2Instance.PublicIp
-    Export:
-      Name: !Sub "${AWS::StackName}-EC2InstancePublicIp"
 
   S3BucketName:
     Description: S3 Bucket Name
     Value: !Ref S3Bucket
-    Export:
-      Name: !Sub "${AWS::StackName}-S3BucketName"
 
 Outputs:
   LoadBalancerEndpoint:
     Description: “ALB Endpoint”
-    Value: !Sub "http://${MyLoadBalancer.DNSName}"
+    Value: !GetAtt MyLoadBalancer.DNSName
   IAMUserAccessKeyId:
     Description: "IAM User Access Key ID"
     Value: !Ref IAMUserAccessKey
