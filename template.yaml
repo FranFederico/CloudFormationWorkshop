@@ -40,16 +40,6 @@ Resources:
     Properties:
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
-
-  MyAutoScalingGroup:
-    Type: AWS::AutoScaling::AutoScalingGroup
-    Properties:
-      LaunchConfigurationName: !Ref LaunchConfiguration
-      MinSize: 1
-      MaxSize: 4
-      DesiredCapacity: 2
-      AvailabilityZones:
-        - eu-west-1
       
   Subnet:
     Type: AWS::EC2::Subnet
@@ -77,7 +67,16 @@ Resources:
           service httpd start  
           echo "<html><body><h1>DevOpsAcademy</h1></body></html>" > /var/www/html/index.html
            chkconfig httpd on
-
+           
+  MyAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      LaunchConfigurationName: !Ref LaunchConfiguration
+      MinSize: 1
+      MaxSize: 4
+      DesiredCapacity: 2
+      AvailabilityZones:
+        - eu-west-1
 
   MyLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -105,9 +104,7 @@ Resources:
    Targets:
         - Id: !Ref MyAutoScalingGroup
           Port: 80
-
-      
-     
+   
   MyListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
@@ -116,15 +113,12 @@ Resources:
       Port: 80
       DefaultActions:
         - Type: forward
-          TargetGroupArn: !Ref MyTargetGroup
-    
+          TargetGroupArn: !Ref MyTargetGroup  
 
   S3Bucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "${Environment}-my-bucket"
-
-
 
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
