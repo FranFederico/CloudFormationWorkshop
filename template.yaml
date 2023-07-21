@@ -1,1 +1,181 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Template AWS Cloudformation
 
+Parameters:
+  Environment:
+    Type: String
+    Default: development
+
+
+Resources:
+  IAMUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: "UtenteIAM"
+
+  IAMUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref IAMUser
+
+  EC2KeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: !Ref KeyName
+      PublicKeyMaterial: "ssh-rsa 16:73:56:21:d8:73:de:bf:37:0a:17:cb:25:fa:e9:bc:6f:fa:e9:ed"
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+
+  MyAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      LaunchConfigurationName: Ref  LaunchConfiguration
+      MinSize: 1
+      MaxSize: 4
+      DesiredCapacity: 2
+      AvailabilityZones:
+        - eu-west-1
+      
+  Subnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.0.0/24
+      AvailabilityZone: "eu-west-1"
+      MapPublicIpOnLaunch: true
+
+    
+
+  LaunchConfiguration:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+         ImageId: ami-0c94855ba95c71c99
+      InstanceType: t2.micro
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      KeyName: !Ref KeyName
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd php php-mysql
+          systemctl enable httpd
+          systemctl start httpd
+          service httpd start
+         
+          echo "<html><body><h1>DevOpsAcademy</h1></body></html>" > /var/www/html/index.html
+           chkconfig httpd on
+      Tags:
+        - Key: Environment
+          Value: DevOpsAcademy
+        - Key: Nome
+          Value: Francesco
+        - Key: Cognome
+          Value: Federico
+
+
+  MyLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: MyLoadBalancer
+      Scheme: internet-facing
+      Type: application
+      Subnets:
+        - SubnetId1
+        - SubnetId2
+      SecurityGroups:
+        - SecurityGroupId
+      Tags:
+        - Key: Name
+          Value: MyLoadBalancer
+  MyTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: MyTargetGroup
+      Port: 80
+      Protocol: HTTP
+      VpcId: VpcId
+      TargetType: "instance"
+      HealthCheckPath: /health
+   Targets:
+        - Id: !Ref MyAutoScalingGroup
+          Port: 80
+
+      
+     
+  MyListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref MyLoadBalancer
+      Protocol: HTTP
+      Port: 80
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref MyTargetGroup
+    
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${Environment}-my-bucket"
+
+
+
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: “Security group”
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+
+  EC2InstancePublicIp:
+    Description: EC2 Instance Public IP
+    Value: !GetAtt EC2Instance.PublicIp
+    Export:
+      Name: !Sub "${AWS::StackName}-EC2InstancePublicIp"
+
+  S3BucketName:
+    Description: S3 Bucket Name
+    Value: !Ref S3Bucket
+    Export:
+      Name: !Sub "${AWS::StackName}-S3BucketName"
+
+Outputs:
+  LoadBalancerEndpoint:
+    Description: “ALB Endpoint”
+    Value: !Sub "http://${MyLoadBalancer.DNSName}"
+  IAMUserAccessKeyId:
+    Description: "IAM User Access Key ID"
+    Value: !Ref IAMUserAccessKey
+  VPCId:
+    Description: "VPC ID"
+    Value: !Ref VPC
+  SubnetId:
+    Description: "Subnet ID"
+    Value: !Ref Subnet
