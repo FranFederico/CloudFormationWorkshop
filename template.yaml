@@ -36,13 +36,21 @@ Resources:
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
       
-  Subnet:
+  Subnet1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
       CidrBlock: 10.0.0.0/24
       AvailabilityZone: "eu-west-1"
       MapPublicIpOnLaunch: true  
+
+  Subnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: "us-east-1a"
+      MapPublicIpOnLaunch: true
 
   PublicRoutingTable:
     Type: AWS::EC2::RouteTable
@@ -85,6 +93,7 @@ Resources:
       DesiredCapacity: 2
       AvailabilityZones:
         - eu-west-1
+        - us-east-1a
 
   MyLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -93,13 +102,13 @@ Resources:
       Scheme: internet-facing
       Type: application
       Subnets:
-        - SubnetId1
-        - SubnetId2
+        - Subnet1
+        - Subnet2
       SecurityGroups:
-        - SecurityGroupId
+        - EC2SecurityGroupId
       Tags:
         - Key: Name
-          Value: MyLoadBalancer
+          Value: "MyLoadBalancer"
           
   MyTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -107,7 +116,7 @@ Resources:
       Name: MyTargetGroup
       Port: 80
       Protocol: HTTP
-      VpcId: VpcId
+      VpcId: !Ref VPC
       TargetType: "instance"
       HealthCheckPath: /health
    Targets:
@@ -127,7 +136,7 @@ Resources:
   S3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "${Environment}-my-bucket"
+      BucketName: "devopsacademy-bucket"
 
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -143,7 +152,6 @@ Resources:
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
-
 
   EC2InstancePublicIp:
     Description: EC2 Instance Public IP
@@ -163,6 +171,10 @@ Outputs:
   VPCId:
     Description: "VPC ID"
     Value: !Ref VPC
-  SubnetId:
-    Description: "Subnet ID"
-    Value: !Ref Subnet
+  Subnet1Id:
+    Description: "Subnet1 ID"
+    Value: !Ref Subnet1
+  Subnet2Id:
+    Description: "Subnet2 ID"
+    Value: !Ref Subnet2
+    
