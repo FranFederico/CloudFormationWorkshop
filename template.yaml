@@ -1,11 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Template AWS Cloudformation
 
-Parameters:
-  Environment:
-    Type: String
-    Default: development
-
 
 Resources:
   IAMUser:
