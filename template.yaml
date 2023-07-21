@@ -11,11 +11,6 @@ Resources:
     Type: AWS::IAM::AccessKey
     Properties:
       UserName: !Ref IAMUser
-
-  EC2KeyPair:
-    Type: AWS::EC2::KeyPair
-    Properties:
-      KeyName: !Ref KeyName
       PublicKeyMaterial: "ssh-rsa 16:73:56:21:d8:73:de:bf:37:0a:17:cb:25:fa:e9:bc:6f:fa:e9:ed"
 
   VPC:
