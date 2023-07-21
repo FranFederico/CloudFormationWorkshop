@@ -1,1 +1,12 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Parametri CloudFormation.
 
+
+Parameters:
+  Environment:
+    Type: String
+    Default: DevOpsAcademy
+
+
+  ImageId: ami-0c94855ba95c71c99
+      InstanceType: t2.micro
